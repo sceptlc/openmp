@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <math.h>
 
-#define REP 1000000000
+#define REP 5000000000
 
 int main()
 {

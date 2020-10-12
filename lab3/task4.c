@@ -13,7 +13,7 @@ int main ()
         char *result = str;
 
         for (int j = 1; j < 10; j++)
-            result += sprintf(result, "%d\t", i*j);
+            result += sprintf(result, "%dx%d=%d\t", i, j, i*j);
         result = str;
 
         #pragma omp ordered
