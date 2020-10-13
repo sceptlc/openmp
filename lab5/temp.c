@@ -1,7 +1,4 @@
 #include <stdio.h> 
-#include <stdlib.h> 
-#include <stdbool.h> 
-#include <time.h>
 #include <omp.h>
 #include <limits.h> 
 
@@ -60,35 +57,19 @@ void merge_sort(int arr[], int n, int maxele)
 	merge_sort_rec(arr, 0, n-1, maxele); 
 } 
 
-void fill_rand(int *arr, int n)
-{
-	srand(time(0));
-	for (int i = 0; i < n; i++)
-		arr[i] = rand() % 1000 - 300;
-}
-
-bool test_sorted(int *arr, int n)
-{
-	for (int i = 1; i < n; i++)
-		if (arr[i] < arr[i - 1]) return false;
-	return true;
-}
-
 int main() 
 { 
-	int n = 33; 
-	int arr[n]; 
+	int arr[] = { 999, 612, 589, 856, 56, 945, 243, 333, 1, 45, 11, 1488, 33 }; 
+	int n = sizeof(arr) / sizeof(int); 
 
-	fill_rand(arr, n);
 	int maxele = max_element(arr, n) + 1; 
 	int threads_n = 0; // remember number of threads in parallel block
 
-	int sumbef = 0, sumaft = 0;
-	for (int i = 0; i < n; sumbef += arr[i], i++);
+	// int sum = 0;
+	// for (int i = 0; i < n; sum += arr[i], i++);
+	// printf("Sum: %d\n", sum);
 
-	for (int i = 0; i < n; i++)
-		printf("%d ", arr[i]);
-	printf("\n");
+	printf("Sorting array of size %d\n", n);
 
 	#pragma omp parallel num_threads(3) shared(arr)
 	{
@@ -98,45 +79,40 @@ int main()
 		const int left  = i * share;
 		// if this is a last chunk, take all that remains
 		const int right = (i == thr_n - 1) ? n - 1: (i + 1) * share - 1;
-		// printf("thread #%d: indices %d to %d\n", i, left, right);
 
 		#pragma omp single
 			threads_n = thr_n;
 
+		printf("thread #%d: indices %d to %d\n", i, left, right);
+
 		merge_sort(arr + left, right - left + 1, maxele);
 	}
+
+
+	for (int i = 0; i < n; i++)
+		printf("%d ", arr[i]);
+	printf("\nThreads finished, going to merge:\n");
 
 	const int share = (n / threads_n);
 	int mid, right;
 	for (int i = 1; i < threads_n; i++) {	
 		mid = i * share - 1;
 		// if this is a last chunk, take all that remains
-		right = (i == threads_n - 1) ? n - 1: (i + 1) * share - 1;
+		right = (i == threads_n - 1) ? n : (i + 1) * share - 1;
 		
-		// printf("merging arr[] left=%d, mid=%d, right=%d\n", 0, mid, right);
+		printf("merging arr[] left=%d, mid=%d, right=%d\n", 0, mid, right);
 		merge(arr, 0, mid, right, maxele);
 	}
+
+	printf("Sorted array \n");
 
 	for (int i = 0; i < n; i++)
 		printf("%d ", arr[i]);
 	printf("\n");
 	
-
-
-	sumaft = 0;
-	for (int i = 0; i < n; sumaft += arr[i], i++);
-	
-	if (test_sorted(arr, n))
-		printf("Test passed!\n");
-	else
-		printf("[!!!] Test failed!\n");
-
-	if (sumbef == sumaft)
-		printf("Sum not changed!\n");
-	else
-		printf("[!!!] Sum before = %d, after = %d!\n", sumbef, sumaft);
-
-	
+	// sum = 0;
+	// for (int i = 0; i < n; sum += arr[i], i++);
+	// printf("Sum: %d\n", sum);
 
 	return 0;
 } 
