@@ -56,15 +56,13 @@ int main()
 
     int *result = malloc(n * sizeof(int));
 
-    #pragma omp parallel num_threads(n)
+    #pragma omp for
+    for (int i = 0; i < n; i++) 
     {
-        int thr_i = omp_get_thread_num();
-        int part_sum = 0;
-
+        int sum = 0; 
         for (int j = 0; j < n; j++)
-            part_sum += matrix[thr_i][j] * vector[j];
-
-        result[thr_i] = part_sum;
+            sum += matrix[i][j] * vector[j];
+        result[i] = sum;
     }
 
     printf("Результат: ");
