@@ -75,6 +75,13 @@ bool test_sorted(int *arr, int n)
 	return true;
 }
 
+int arr_sum(int *arr, int n) {
+    int res = 0;
+	for (int i = 0; i < n; res += arr[i], i++)
+		;
+    return res;
+}
+
 void print_arr(int *arr, int n)
 {
 	for (int i = 0; i < n; i++)
@@ -84,20 +91,20 @@ void print_arr(int *arr, int n)
 
 int main()
 {
-	double start = omp_get_wtime();
-	const int n = 500000;
+	double start, end;
+	const int n = 1500000;
 	int arr[n];
-	int threads_n = 0;			// remember number of threads in parallel block
-	int sumbef = 0, sumaft = 0; // checksums to compare
+	int threads_n = 0;	// remember number of threads in parallel block
+	int sumbef, sumaft; // checksums to compare
 
 	fill_rand(arr, n);
-	for (int i = 0; i < n; sumbef += arr[i], i++)
-		;
+	sumbef = arr_sum(arr, n);
+	start = omp_get_wtime();
 
-/**
+	/**
 	 * Sort chunks in parallel
 	 */
-#pragma omp parallel num_threads(8) shared(arr)
+	#pragma omp parallel num_threads(4) shared(arr)
 	{
 		const int i = omp_get_thread_num();
 		const int thr_n = omp_get_num_threads();
@@ -107,8 +114,8 @@ int main()
 		const int right = (i == thr_n - 1) ? n - 1 : (i + 1) * share - 1;
 		printf("thread #%d: indices %d to %d\n", i, left, right);
 
-#pragma omp single
-		threads_n = thr_n;
+		#pragma omp single
+			threads_n = thr_n;
 
 		merge_sort(arr, left, right);
 	}
@@ -128,21 +135,14 @@ int main()
 		merge(arr, 0, mid, right);
 	}
 
-	double end = omp_get_wtime();
+	end = omp_get_wtime();
+	sumaft = arr_sum(arr, n);
 
-	sumaft = 0;
-	for (int i = 0; i < n; sumaft += arr[i], i++)
-		;
+	if (test_sorted(arr, n)) printf("Test passed!\n");
+	else printf("[!!!] Test failed!\n");
 
-	if (test_sorted(arr, n))
-		printf("Test passed!\n");
-	else
-		printf("[!!!] Test failed!\n");
-
-	if (sumbef == sumaft)
-		printf("Sum not changed!\n");
-	else
-		printf("[!!!] Sum before = %d, after = %d!\n", sumbef, sumaft);
+	if (sumbef == sumaft) printf("Sum not changed!\n");
+	else printf("[!!!] Sum before = %d, after = %d!\n", sumbef, sumaft);
 
 	printf("[Time passed]: %lf\n", end - start);
 
